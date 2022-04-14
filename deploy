@@ -1,0 +1,161 @@
+#!/bin/bash
+##
+# A quick hacky script to get masterless salt deployed and configured.
+# See help text (./deploy -h) and README.rst for requirements.
+##
+
+main() {
+	# Prep
+	parse_options "$@"
+	safety_checks
+	lock acquire "$0" || die 'Unable to acquire lock'
+	mkdir -p /etc/salt/minion.d
+
+	# Install Masterless Salt
+	install_dependencies || die 'Failed to install dependencies'
+	configure_minion || die 'Failed to install salt-minion'
+	deploy_gpgkeys || die 'Failed to unpack GPG keys'
+	apt-get install -y salt-minion || die 'Failed to install salt-minion'
+
+	# Run Highstate and Configure System
+	salt-call --local state.highstate || die 'Provisioning process (highstate) failed'
+
+	# Cleanup
+	lock destroy "$0"
+}
+
+show_usage() {
+	t="$(printf '\t')"
+	cat <<-EOF
+	Deploy masterless salt on an ngxbot web server.
+
+	Usage: $0 [-h] <optional arguments>
+
+	Options:
+	  -k [http]${t}Location of encrypted blob containing Salt GPG keys (can be file)
+	  -h${t}${t}Print this help text
+
+	Defaults (Environment Variables):
+	  NGX_SALTGPG${t}https://raw.githubusercontent.com/ngx/ngxbot-host/master/pillar/skeys.gpg
+	EOF
+}
+
+# Parse options, prioritizing args > env > defaults
+# Exports: NGX_SALTGPG
+parse_options() {
+	# Default values
+	# These can be overridden by setting environment variables
+	export NGX_SALTGPG="${NGX_SALTGPG:-https://raw.githubusercontent.com/ngx/ngxbot-host/master/pillar/skeys.gpg}"
+
+	# Modify defaults
+	while getopts 'k:h' opt; do
+		case "$opt" in
+			(k) NGX_SALTGPG="$OPTARG";;
+			(h) show_usage; exit 0;;
+			(*) die "Invalid option: $opt"
+		esac
+	done
+}
+
+# Verify all expected data is currently present or else die with reason
+safety_checks() {
+	command_present apt-get || die 'Must have apt-get available'
+}
+
+# Install dependencies to deploy gpg keys and run salt
+install_dependencies() {
+	apt-get update
+	apt-get -y install gpg python3-pygit2 wget
+}
+
+# Create default minion configuration
+configure_minion() {
+	cat >/etc/salt/minion.d/saltsolo.conf <<-EOF
+		file_client: local
+		fileserver_backend:
+		  - gitfs
+		gitfs_remotes:
+		  - https://github.com/ngx/ngxbot-host.git:
+		    - root: states
+		    - ssl_verify: False
+		ext_pillar:
+		  - git:
+		    - https://github.com/ngx/ngxbot-host.git:
+		      - root: pillar
+		      - ssl_verify: False
+		EOF
+}
+
+# Download and unpack Salt GPG keys
+# NOTE: This requires a password, shared among admins
+deploy_gpgkeys() {
+	# Get the encrypted keys
+	local gpgblob="$(mktemp)"
+	if [[ -f "$NGX_SALTGPG" ]]; then
+		cp "$NGX_SALTGPG" "$gpgblob" || return 1
+	else
+		wget "$NGX_SALTGPG" -O "$gpgblob" || return 1
+	fi
+
+	# Deploy GPG keys
+	gpg --batch -o- -d "$gpgblob" | tar zx -C /etc/salt/ || (rm "$gpgblob"; return 1)
+	rm "$gpgblob"
+}
+
+
+##
+# Copied from https://github.com/MTecknology/script-helpers
+##
+
+# Check if a command (or alias/function) is available.
+# Usage: command_present bin
+command_present() {
+	command -v "$1" >/dev/null && return 0
+	alias | grep -q "\s$1=" 2>/dev/null && return 0
+	return 1
+}
+
+# Print a formatted (critical) message and exit with status.
+# Usage: die [exit_status] message
+die() {
+	lock destroy "$0"
+
+	# If first argument was an integer, use as exit_status
+	case "$1" in
+		(*[!0123456789]*) _exit_status=1;;
+		(*) _exit_status="$1"; shift;;
+	esac
+
+	printf '*** CRITICAL: %s ***\n' "$1"
+	exit "$_exit_status"
+}
+
+# Manage a lock file.
+# Usage: lock operation [key]
+lock() {
+	_h="$(printf '%s' "${2:-$0}" | cksum | awk '{print $1}')"
+	case "$1" in
+		(acquire) _lock_acquire "/tmp/$_h.lock";;
+		(destroy) rm -f "/tmp/$_h.lock";;
+	esac
+}
+
+# Create a lock file and populate it with PID.
+_lock_acquire() {
+	# Check if running
+	[ -e "$1" ] && kill -0 "$(cat "$1")" && return 1
+
+	# make sure the lockfile is removed when we exit and then claim it
+	# shellcheck disable=SC2064 #[we want this expanding now]
+	trap "rm -f '$1'; exit" INT TERM EXIT
+	echo $$ > "$1"
+
+	return 0
+}
+
+
+##
+# Kick off the script
+##
+
+main "$@"

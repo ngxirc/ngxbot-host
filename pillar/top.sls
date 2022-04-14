@@ -1,0 +1,5 @@
+base:
+  '*':
+    - ngxbot
+    - users
+    - webapps

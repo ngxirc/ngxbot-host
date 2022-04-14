@@ -1,0 +1,15 @@
+[Unit]
+Description=ngxbot daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/supybot {{ salt.pillar.get('ngxbot:homedir') }}/ngxbot.conf
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill $MAINPID
+Restart=no
+User=ngxbot
+SyslogIdentifier=ngxbot
+
+[Install]
+WantedBy=multi-user.target
