@@ -77,12 +77,10 @@ configure_minion() {
 		gitfs_remotes:
 		  - https://github.com/ngx/ngxbot-host.git:
 		    - root: states
-		    - ssl_verify: False
 		ext_pillar:
 		  - git:
 		    - https://github.com/ngx/ngxbot-host.git:
 		      - root: pillar
-		      - ssl_verify: False
 		EOF
 }
 

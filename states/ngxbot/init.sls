@@ -100,6 +100,8 @@ ngxbot-data-messageparser-db:
       - file: ngxbot-data-messageparser-orig-db
     - watch:
       - file: ngxbot-data-messageparser-orig-db
+    - watch_in:
+      - service: ngxbot
 
 {% for chan in ["#nginx", "#ngx-social", "#salt", "#salt-offtopic", "##eros-chat"] %}
 ngxbot-data-chan-dir-{{ chan }}:
