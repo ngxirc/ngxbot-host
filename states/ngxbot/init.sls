@@ -50,7 +50,7 @@ ngxbot-config:
     - user: root
     - group: root
 
-{% for dir in ['bot', 'bot/plugins', 'bot/conf'] %}
+{% for dir in ['bot', 'bot/plugins', 'bot/conf', 'bot/data'] %}
 ngxbot-botdirs-{{ dir }}:
   file.directory:
     - name: {{ salt.pillar.get('ngxbot:homedir') }}/{{ dir }}
@@ -76,8 +76,53 @@ ngxbot-conf-irccat:
     - group: root
     - require:
       - file: ngxbot-botdirs-bot/conf
-    - watch_in:
-      - service ngxbot
+    - require_in:
+      - service: ngxbot
+
+ngxbot-data-messageparser-orig-db:
+  file.managed:
+    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/MessageParser_orig.db
+    - source: salt://ngxbot/MessageParser.db
+    - user: root
+    - group: root
+    - require:
+      - file: ngxbot-botdirs-bot/data
+    - require_in:
+      - service: ngxbot
+
+# ngxbot requires read-write to this in order to track usage
+# ... we don't care about usage, but can't disable the feature
+ngxbot-data-messageparser-db:
+  cmd.wait:
+    - name: cp {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/MessageParser_orig.db {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/MessageParser.db
+    - runas: ngxbot
+    - require:
+      - file: ngxbot-data-messageparser-orig-db
+    - watch:
+      - file: ngxbot-data-messageparser-orig-db
+
+{% for chan in ["#nginx", "#ngx-social", "#salt", "#salt-offtopic", "##eros-chat"] %}
+ngxbot-data-chan-dir-{{ chan }}:
+  file.directory:
+    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/{{ chan }}
+    - user: ngxbot
+    - group: ngxbot
+    - require:
+      - file: ngxbot-botdirs-bot/data
+
+ngxbot-data-chan-parsersymlink-{{ chan }}:
+  file.symlink:
+    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/{{ chan }}/MessageParser.db
+    - target: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/MessageParser.db
+    - force: True
+    - user: root
+    - group: root
+    - require:
+      - file: ngxbot-data-chan-dir-{{ chan }}
+      - cmd: ngxbot-data-messageparser-db
+    - require_in:
+      - service: ngxbot
+{% endfor %}
 
 {% for src, plugin in [
     ('ngxbot', 'Irccat'),
