@@ -16,6 +16,35 @@ ngxbot:
   file.absent:
     - name: {{ salt.pillar.get('ngxbot:homedir') }}/.ssh/authorized_keys
 
+ngxbot-ssh:
+  file.directory:
+    - name: {{ salt.pillar.get('ngxbot:homedir') }}/.ssh
+    - user: ngxbot
+    - group: ngxbot
+    - dir_mode: 700
+    - require:
+      - user: ngxbot
+
+ngxbot-ssh-pubkey:
+  file.managed:
+    - name: {{ salt.pillar.get('ngxbot:homedir') }}/.ssh/id_ed25519.pub
+    - contents_pillar: ngxbot:sshpub
+    - user: ngxbot
+    - group: ngxbot
+    - mode: 644
+    - require:
+      - file: ngxbot-ssh
+
+ngxbot-ssh-prvkey:
+  file.managed:
+    - name: {{ salt.pillar.get('ngxbot:homedir') }}/.ssh/id_ed25519
+    - contents_pillar: ngxbot:sshkey
+    - user: ngxbot
+    - group: ngxbot
+    - mode: 600
+    - require:
+      - file: ngxbot-ssh
+
 ##
 # Plugins
 ##
@@ -125,6 +154,16 @@ ngxbot-data-chan-parsersymlink-{{ chan }}:
     - require_in:
       - service: ngxbot
 {% endfor %}
+
+# Prevent ngxbot from creating and leaving behind temp versions of files that
+# ngxbot can't write to (users.conf, ngxbot.conf).
+ngxbot-data-tmp:
+  file.directory:
+    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/tmp
+    - user: root
+    - group: root
+    - require:
+      - file: ngxbot-botdirs-bot/data
 
 {% for src, plugin in [
     ('ngxbot', 'Irccat'),

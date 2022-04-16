@@ -2,6 +2,21 @@
 
 ngxbot:
   homedir: /opt/ngxbot
+  sshpub: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPhhmoZ0PLO/kCDatClPYzujgCPVnXdAsqF4zD1bFUN1 ngxbot
+  sshkey: |
+      -----BEGIN PGP MESSAGE-----
+
+      hF4DmUPsRBokU2cSAQdAlemFqZqNC6LW8HiUTLqv2U5ZBNwOUz6u5hsovxWuNzgw
+      SNGTpiE2ub995DHRjZ/aqRDCskfycpJR2iOjTFnyatr+i7a6f5NzqrWK9+b2mNWB
+      0sCFAZV3A+GlaVUTXNUYMWG/w+HOTgK/Sk/Ll3EgD1fO/SNr1TWatWneGDJ9wvFW
+      uk904I8DrO4genhx78gbgJnIzK8bW+zbZCbcwUF5np6s55k7tcWv/7eaQN9yKBuU
+      UVHSb3ANa4i6oTZu9CFkhvoS3Y+0R/iilZauJtW6OMPFn7ztr2IbRGA2QuBLs4jL
+      F3SBKgzMOElcJ8JnFx8sFIvojmurjuWIWlBjpbf3LxWBEZXPUEbhiLwJbOj7bLI+
+      MGTnImlzoaPDBP7V3wCHeBgKqaxqAX12tWC6H1RNIbukDy+nnpiDtY1JbhLhWTgy
+      QyZ1ZL8yBcaVfea+XTs8FPID/uAvj1tqc5P2nXBOyVKsuJaNGFNvRmb9ZDOE4Sm2
+      FYX/MQeJ9JRzpBuOwu1k/V6t8wYfR3gNDh0azzxomfhXS9FbaqLWZg==
+      =wodv
+      -----END PGP MESSAGE-----
   networks:
     libera:
       channels: "##eros-chat #nginx #ngx-social #salt #salt-offtopic"
