@@ -1,3 +1,4 @@
+{% set homedir = salt.pillar.get('ngxbot:homedir') %}
 ##
 # User
 ##
@@ -7,18 +8,30 @@ ngxbot:
     - gid: 8001
   user.present:
     - shell: /bin/bash
-    - home: {{ salt.pillar.get('ngxbot:homedir') }}
+    - home: {{ homedir }}
     - uid: 8001
     - gid: 8001
     - remove_groups: True
     - require:
       - group: ngxbot
   file.absent:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/.ssh/authorized_keys
+    - name: {{ homedir }}/.ssh/authorized_keys
+
+ngxbot-gitconfig:
+  file.managed:
+    - name: {{ homedir }}/.gitconfig
+    - user: ngxbot
+    - group: ngxbot
+    - require:
+      - user: ngxbot
+    - contents: |
+        [user]
+            email = salt@ngxbot.nginx.org
+            name = ngxbot
 
 ngxbot-ssh:
   file.directory:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/.ssh
+    - name: {{ homedir }}/.ssh
     - user: ngxbot
     - group: ngxbot
     - dir_mode: 700
@@ -27,7 +40,7 @@ ngxbot-ssh:
 
 ngxbot-ssh-pubkey:
   file.managed:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/.ssh/id_ed25519.pub
+    - name: {{ homedir }}/.ssh/id_ed25519.pub
     - contents_pillar: ngxbot:sshpub
     - user: ngxbot
     - group: ngxbot
@@ -37,7 +50,7 @@ ngxbot-ssh-pubkey:
 
 ngxbot-ssh-prvkey:
   file.managed:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/.ssh/id_ed25519
+    - name: {{ homedir }}/.ssh/id_ed25519
     - contents_pillar: ngxbot:sshkey
     - user: ngxbot
     - group: ngxbot
@@ -73,7 +86,7 @@ ngxbot-deps:
 
 ngxbot-config:
   file.managed:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/ngxbot.conf
+    - name: {{ homedir }}/ngxbot.conf
     - source: salt://ngxbot/ngxbot.conf
     - template: jinja
     - user: root
@@ -82,14 +95,14 @@ ngxbot-config:
 {% for dir in ['bot', 'bot/plugins', 'bot/conf', 'bot/data'] %}
 ngxbot-botdirs-{{ dir }}:
   file.directory:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/{{ dir }}
+    - name: {{ homedir }}/{{ dir }}
     - user: ngxbot
     - group: ngxbot
 {% endfor %}
 
 ngxbot-conf-users:
   file.managed:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/conf/users.conf
+    - name: {{ homedir }}/bot/conf/users.conf
     - source: salt://ngxbot/bot_users.conf
     - template: jinja
     - user: root
@@ -97,69 +110,11 @@ ngxbot-conf-users:
     - require:
       - file: ngxbot-botdirs-bot/conf
 
-ngxbot-conf-irccat:
-  file.managed:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/conf/sections.json
-    - contents_pillar: pbin-creds:irccat-config
-    - user: root
-    - group: root
-    - require:
-      - file: ngxbot-botdirs-bot/conf
-    - require_in:
-      - service: ngxbot
-
-ngxbot-data-messageparser-orig-db:
-  file.managed:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/MessageParser_orig.db
-    - source: salt://ngxbot/MessageParser.db
-    - user: root
-    - group: root
-    - require:
-      - file: ngxbot-botdirs-bot/data
-    - require_in:
-      - service: ngxbot
-
-# ngxbot requires read-write to this in order to track usage
-# ... we don't care about usage, but can't disable the feature
-ngxbot-data-messageparser-db:
-  cmd.wait:
-    - name: cp {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/MessageParser_orig.db {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/MessageParser.db
-    - runas: ngxbot
-    - require:
-      - file: ngxbot-data-messageparser-orig-db
-    - watch:
-      - file: ngxbot-data-messageparser-orig-db
-    - watch_in:
-      - service: ngxbot
-
-{% for chan in ["#nginx", "#ngx-social", "#salt", "#salt-offtopic", "##eros-chat"] %}
-ngxbot-data-chan-dir-{{ chan }}:
-  file.directory:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/{{ chan }}
-    - user: ngxbot
-    - group: ngxbot
-    - require:
-      - file: ngxbot-botdirs-bot/data
-
-ngxbot-data-chan-parsersymlink-{{ chan }}:
-  file.symlink:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/{{ chan }}/MessageParser.db
-    - target: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/MessageParser.db
-    - force: True
-    - user: root
-    - group: root
-    - require:
-      - file: ngxbot-data-chan-dir-{{ chan }}
-      - cmd: ngxbot-data-messageparser-db
-    - require_in:
-      - service: ngxbot
-{% endfor %}
-
 # Prevent ngxbot from creating and leaving behind temp versions of files that
 # ngxbot can't write to (users.conf, ngxbot.conf).
 ngxbot-data-tmp:
   file.directory:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/data/tmp
+    - name: {{ homedir }}/bot/data/tmp
     - user: root
     - group: root
     - require:
@@ -172,7 +127,7 @@ ngxbot-data-tmp:
     ] %}
 ngxbot-plugin-{{ plugin }}:
   file.symlink:
-    - name: {{ salt.pillar.get('ngxbot:homedir') }}/bot/plugins/{{ plugin }}
+    - name: {{ homedir }}/bot/plugins/{{ plugin }}
     - target: /srv/plugins/{{ src }}/{{ plugin }}
     - user: ngxbot
     - group: ngxbot
@@ -202,3 +157,113 @@ ngxbot-service:
     - watch:
       - file: ngxbot-config
       - file: ngxbot-conf-users
+
+##
+# Bot Plugin - Irccat
+##
+
+ngxbot-conf-irccat:
+  file.managed:
+    - name: {{ homedir }}/bot/conf/sections.json
+    - contents_pillar: pbin-creds:irccat-config
+    - user: root
+    - group: root
+    - require:
+      - file: ngxbot-botdirs-bot/conf
+    - require_in:
+      - service: ngxbot
+
+##
+# Bot Plugin - MessageParser
+##
+
+ngxbot-data-messageparser-orig-db:
+  file.managed:
+    - name: {{ homedir }}/bot/data/MessageParser_orig.db
+    - source: salt://ngxbot/MessageParser.db
+    - user: root
+    - group: root
+    - require:
+      - file: ngxbot-botdirs-bot/data
+    - require_in:
+      - service: ngxbot
+
+# ngxbot requires read-write to this in order to track usage
+# ... we don't care about usage, but can't disable the feature
+ngxbot-data-messageparser-db:
+  cmd.wait:
+    - name: cp {{ homedir }}/bot/data/MessageParser_orig.db {{ homedir }}/bot/data/MessageParser.db
+    - runas: ngxbot
+    - require:
+      - file: ngxbot-data-messageparser-orig-db
+    - watch:
+      - file: ngxbot-data-messageparser-orig-db
+    - watch_in:
+      - service: ngxbot
+
+{% for chan in ["#nginx", "#ngx-social", "#salt", "#salt-offtopic", "##eros-chat"] %}
+ngxbot-data-chan-dir-{{ chan }}:
+  file.directory:
+    - name: {{ homedir }}/bot/data/{{ chan }}
+    - user: ngxbot
+    - group: ngxbot
+    - require:
+      - file: ngxbot-botdirs-bot/data
+
+ngxbot-data-chan-parsersymlink-{{ chan }}:
+  file.symlink:
+    - name: {{ homedir }}/bot/data/{{ chan }}/MessageParser.db
+    - target: {{ homedir }}/bot/data/MessageParser.db
+    - force: True
+    - user: root
+    - group: root
+    - require:
+      - file: ngxbot-data-chan-dir-{{ chan }}
+      - cmd: ngxbot-data-messageparser-db
+    - require_in:
+      - service: ngxbot
+{% endfor %}
+
+##
+# Bot Plugin - Factoids
+# This also handles automatic backups
+##
+
+ngxbot-factoids:
+  git.cloned:
+    - name: git@github.com:ngx/ngxbot-host.git
+    - branch: factoids
+    - target: {{ homedir }}/bot/data/factoids
+    - identity: {{ homedir }}/.ssh/id_ed25519
+    - user: ngxbot
+    - require:
+      - user: ngxbot
+
+{% for channel, factsdb in [
+    ("#nginx", "nginx.db"),
+    ("#ngx-social", "nginx.db"),
+    ("#salt", "salt.db"),
+    ("#salt-offtopic", "salt.db"),
+    ] %}
+ngxbot-factoids-symlink-{{ channel }}:
+  file.symlink:
+    - name: {{ homedir }}/bot/data/{{ channel }}/Factoids.db
+    - target: {{ homedir }}/bot/data/factoids/{{ factsdb }}
+    - force: True
+    - user: root
+    - group: root
+    - require:
+      - git: ngxbot-factoids
+    - require_in:
+      - service: ngxbot
+{% endfor %}
+
+ngxbot-factoids-backup:
+  cmd.run:
+    - name: git commit -am automatic-snapshot; git push origin factoids
+    - unless: git diff --exit-code
+    - cwd: {{ homedir }}/bot/data/factoids/
+    - runas: ngxbot
+    - require:
+      - git: ngxbot-factoids
+      - file: ngxbot-gitconfig
