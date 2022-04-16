@@ -76,6 +76,8 @@ ngxbot-conf-irccat:
     - group: root
     - require:
       - file: ngxbot-botdirs-bot/conf
+    - watch_in:
+      - service ngxbot
 
 {% for src, plugin in [
     ('ngxbot', 'Irccat'),

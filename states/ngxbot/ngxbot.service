@@ -10,6 +10,10 @@ ExecStop=/bin/kill $MAINPID
 Restart=no
 User=ngxbot
 SyslogIdentifier=ngxbot
+SystemCallFilter=~@raw-io @clock @cpu-emulation @debug @keyring @module @mount @obsolete @privileged @raw-io
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths={{ salt.pillar.get('ngxbot:homedir') }}
 
 [Install]
 WantedBy=multi-user.target
