@@ -177,28 +177,15 @@ ngxbot-conf-irccat:
 # Bot Plugin - MessageParser
 ##
 
-ngxbot-data-messageparser-orig-db:
+ngxbot-data-messageparser-db:
   file.managed:
-    - name: {{ homedir }}/bot/data/MessageParser_orig.db
+    - name: {{ homedir }}/bot/data/MessageParser.db
     - source: salt://ngxbot/MessageParser.db
     - user: root
     - group: root
     - require:
       - file: ngxbot-botdirs-bot/data
     - require_in:
-      - service: ngxbot
-
-# ngxbot requires read-write to this in order to track usage
-# ... we don't care about usage, but can't disable the feature
-ngxbot-data-messageparser-db:
-  cmd.wait:
-    - name: cp {{ homedir }}/bot/data/MessageParser_orig.db {{ homedir }}/bot/data/MessageParser.db
-    - runas: ngxbot
-    - require:
-      - file: ngxbot-data-messageparser-orig-db
-    - watch:
-      - file: ngxbot-data-messageparser-orig-db
-    - watch_in:
       - service: ngxbot
 
 {% for chan in ["#nginx", "#ngx-social", "#salt", "#salt-offtopic", "##eros-chat"] %}
@@ -219,7 +206,7 @@ ngxbot-data-chan-parsersymlink-{{ chan }}:
     - group: root
     - require:
       - file: ngxbot-data-chan-dir-{{ chan }}
-      - cmd: ngxbot-data-messageparser-db
+      - file: ngxbot-data-messageparser-db
     - require_in:
       - service: ngxbot
 {% endfor %}
