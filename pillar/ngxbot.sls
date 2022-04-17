@@ -102,6 +102,8 @@ ngxbot:
         - "#salt-offtopic,factoids.forget"
       hostmasks:
         - "*@user/gtmanfred"
+        - "*@user/msmith"
+        - "*@user/myii"
       password: |
           -----BEGIN PGP MESSAGE-----
 
