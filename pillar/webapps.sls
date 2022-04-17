@@ -1,8 +1,8 @@
 #!yaml|gpg
 
 webapps:
-  - pbin
-  - ngxbot
+  pbin: paste.nginx.org
+  ngxbot: ngxbot.nginx.org
 
 pbin-creds:
   irccat: |

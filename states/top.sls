@@ -2,6 +2,7 @@ base:
   '*':
     - basics
     - apt
+    - certbot
     - ferm
     - nginx
     - ngxbot
