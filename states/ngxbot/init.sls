@@ -110,15 +110,24 @@ ngxbot-conf-users:
     - require:
       - file: ngxbot-botdirs-bot/conf
 
-# Prevent ngxbot from creating and leaving behind temp versions of files that
-# ngxbot can't write to (users.conf, ngxbot.conf).
 ngxbot-data-tmp:
   file.directory:
     - name: {{ homedir }}/bot/data/tmp
-    - user: root
-    - group: root
+    - user: ngxbot
+    - group: ngxbot
     - require:
       - file: ngxbot-botdirs-bot/data
+
+# Limnoria creates temp files before replacing config files but leaves behind
+# temp files when the replace fails for salt-managed files.
+ngxbot-data-tmp-cleanup:
+  cron.present:
+    - name: rm -f {{ homedir }}/bot/data/tmp/*
+    - identifier: ngxbot-tmp-cleanup
+    - special: '@hourly'
+    - require:
+      - file: ngxbot-data-tmp
+
 
 {% for src, plugin in [
     ('ngxbot', 'Irccat'),
