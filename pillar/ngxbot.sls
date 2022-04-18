@@ -28,6 +28,8 @@ ngxbot:
       hostmasks:
         - "*@user/Peng"
         - "*@videolan/developer/thresh"
+        # test user
+        - "*@2001:470:38fe:2:*"
       capabilities:
         # nginx
         - "#nginx,factoids.alias"
