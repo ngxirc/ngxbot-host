@@ -28,21 +28,13 @@ ngxbot:
       hostmasks:
         - "*@user/Peng"
         - "*@videolan/developer/thresh"
-        # test user
-        - "*@2001:470:38fe:2:*"
       capabilities:
-        # nginx
-        - "#nginx,factoids.alias"
-        - "#nginx,factoids.learn"
-        - "#nginx,factoids.change"
-        - "#nginx,factoids.forget"
-        - "#nginx,pbinadmin"
-        # nginx-social
-        - "#ngx-social,factoids.alias"
-        - "#ngx-social,factoids.learn"
-        - "#ngx-social,factoids.change"
-        - "#ngx-social,factoids.forget"
+        - "factoids.alias"
+        - "factoids.learn"
+        - "factoids.change"
+        - "factoids.forget"
         - "#ngx-social,pbinadmin"
+        - "#nginx,pbinadmin"
       password: |
           -----BEGIN PGP MESSAGE-----
 
@@ -61,16 +53,10 @@ ngxbot:
         - "*@user/msmith"
         - "*@user/myii"
       capabilities:
-        # salt
-        - "#salt,factoids.alias"
-        - "#salt,factoids.learn"
-        - "#salt,factoids.change"
-        - "#salt,factoids.forget"
-        # salt-offtopic
-        - "#salt-offtopic,factoids.alias"
-        - "#salt-offtopic,factoids.learn"
-        - "#salt-offtopic,factoids.change"
-        - "#salt-offtopic,factoids.forget"
+        - "factoids.alias"
+        - "factoids.learn"
+        - "factoids.change"
+        - "factoids.forget"
       password: |
           -----BEGIN PGP MESSAGE-----
 
