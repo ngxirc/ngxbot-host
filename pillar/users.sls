@@ -26,4 +26,4 @@ admins:
         =VJjd
         -----END PGP MESSAGE-----
     keys:
-      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF4WGs0eqf672KoTebQB7G9of8oUGtOXxi/qLxfhpBSZ
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDUGwmFHLugs42aNZl10vttqSd5/TyuwlSIAeZ0FRLul michael@mikepc
