@@ -12,6 +12,9 @@ To encrypt a password suitable for usage in pillar data::
     gpg --import saltpub.gpg
     echo -n 'S3cr!t' | gpg --trust-model always -ear salt@ngxbot.nginx.org
 
+`S3cr1t` as used in the previous command must be a hash of a password, use
+mkpasswd to generate it.
+
 Salt Deployment
 ---------------
 
